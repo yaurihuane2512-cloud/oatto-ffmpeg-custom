@@ -19,29 +19,33 @@ jobs:
 
       - name: Install Android NDK
         run: |
+          # Instalamos la versión exacta que pide la documentación para evitar errores de compilador
           echo "y" | sudo ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653"
 
-      - name: Build AAR LGPL (Full Transform Mode)
+      - name: Build AAR LGPL (Configuración Oatto)
         run: |
-          # Definir ruta del NDK
+          # 1. Definimos las rutas que GitHub oculta por defecto
+          export ANDROID_HOME=$ANDROID_HOME
           export ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653
           
-          # Dar permisos de ejecución al script
+          # 2. PERMISO CRÍTICO: Sin esto, da Exit Code 1 a los 30 segundos
           chmod +x android.sh
+          chmod +x scripts/*.sh
           
-          # Ejecutar compilación para Oatto
+          # 3. Ejecución con la bandera --lts (Long Term Support) para mayor estabilidad en Android
           ./android.sh \
+            --lts \
             --enable-libvpx \
             --enable-lame \
             --enable-freetype \
             --enable-fontconfig \
-            --enable-zlib \
             --disable-gpl \
             --disable-x264 \
             --disable-x265
-            
+
       - name: Upload Oatto AAR
         uses: actions/upload-artifact@v4
         with:
           name: oatto-ffmpeg-lgpl
-          path: prebuilt/android-arm64/ffmpeg-kit/*.aar
+          # Usamos un comodín (**) para que GitHub encuentre el AAR en cualquier carpeta que se cree
+          path: prebuilt/**/ffmpeg-kit/*.aar
