@@ -1,0 +1,41 @@
+name: Build FFmpeg LGPL for Oatto
+on: workflow_dispatch
+
+jobs:
+  build_ffmpeg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ffmpeg-kit
+        uses: actions/checkout@v4
+        with:
+          repository: arthenica/ffmpeg-kit
+          fetch-depth: 1
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Android NDK
+        run: |
+          echo "y" | sudo ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653"
+
+      - name: Build AAR LGPL (Full Transform Mode)
+        run: |
+          export ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653
+          ./android.sh \
+            --enable-libvpx \
+            --enable-lame \
+            --enable-freetype \
+            --enable-fontconfig \
+            --enable-zlib \
+            --disable-gpl \
+            --disable-x264 \
+            --disable-x265
+            
+      - name: Upload Oatto AAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: oatto-ffmpeg-lgpl
+          path: prebuilt/android-arm64/ffmpeg-kit/*.aar
